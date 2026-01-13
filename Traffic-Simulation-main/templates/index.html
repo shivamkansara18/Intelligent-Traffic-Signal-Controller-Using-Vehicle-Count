@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Upload and Predictions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/design.css') }}">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Vehicle Detection</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/design.css') }}">
+        <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+</head>
+<body>
+    <main class="page">
+        <header class="site-header">
+            <div class="title">
+                <h1>Vehicle Detection</h1>
+                <p class="subtitle">Upload an image to detect vehicles</p>
+            </div>
+        </header>
+
+        <section class="card upload-card">
+            <form id="upload-form" action="/" method="post" enctype="multipart/form-data">
+                <div class="direction-uploads">
+                    <p>Upload up to four images — one per signal direction.</p>
+                    <div class="dir-inputs">
+                        <label for="north-input">
+                            <div class="label-title">North</div>
+                            <div class="label-sub">Approach</div>
+                            <img class="preview" id="preview-north" src="" alt="" style="display:none">
+                            <input id="north-input" name="north" type="file" accept="image/*">
+                        </label>
+
+                        <label for="south-input">
+                            <div class="label-title">South</div>
+                            <div class="label-sub">Approach</div>
+                            <img class="preview" id="preview-south" src="" alt="" style="display:none">
+                            <input id="south-input" name="south" type="file" accept="image/*">
+                        </label>
+
+                        <label for="east-input">
+                            <div class="label-title">East</div>
+                            <div class="label-sub">Approach</div>
+                            <img class="preview" id="preview-east" src="" alt="" style="display:none">
+                            <input id="east-input" name="east" type="file" accept="image/*">
+                        </label>
+
+                        <label for="west-input">
+                            <div class="label-title">West</div>
+                            <div class="label-sub">Approach</div>
+                            <img class="preview" id="preview-west" src="" alt="" style="display:none">
+                            <input id="west-input" name="west" type="file" accept="image/*">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn primary" type="submit">Analyze Directions</button>
+                    <button class="btn" type="reset" id="reset-btn">Clear</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card results-card">
+            <h2 class="section-title">Results</h2>
+            <div class="images">
+                {% if multi_mode %}
+                    <div class="multi-results">
+                        <h3>Traffic Priority Order</h3>
+                        <div class="priority-list">
+                            {% for d in priority_order %}
+                                <div class="priority-item">
+                                    <strong>{{ d.capitalize() }}</strong> — {{ green_times[d]|round(0) }} sec
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <h3>Load Summary</h3>
+                        <table class="load-table">
+                            <thead><tr><th>Direction</th><th>Load</th></tr></thead>
+                            <tbody>
+                            {% for d, L in loads.items() %}
+                                <tr><td>{{ d.capitalize() }}</td><td>{{ L }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <h3>Uploaded / Predicted</h3>
+                        <div class="dir-images">
+                            {% for d in ['north','south','east','west'] %}
+                                <figure>
+                                    <figcaption>{{ d.capitalize() }}</figcaption>
+                                    <div class="img-pair">
+                                        {% if uploaded_paths.get(d) %}
+                                            <img src="{{ url_for('static', filename=uploaded_paths.get(d)) }}" alt="{{ d }} uploaded">
+                                        {% else %}
+                                            <div class="placeholder-box small">No image</div>
+                                        {% endif %}
+
+                                        {% if predicted_paths.get(d) %}
+                                            <img src="{{ url_for('static', filename=predicted_paths.get(d)) }}" alt="{{ d }} predicted">
+                                        {% else %}
+                                            <div class="placeholder-box small">No prediction</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="filename">
+                                        {% if uploaded_paths.get(d) %}{{ uploaded_paths.get(d).split('/')[-1] }}{% else %}&nbsp;{% endif %}
+                                    </div>
+
+                                    <div class="dir-info">
+                                        <div class="badge">Load: {{ loads.get(d, 0) | round(1) }}</div>
+                                        <div class="badge primary">Green: {{ green_times.get(d, 0) | round(0) }}s</div>
+                                    </div>
+                                </figure>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% else %}
+                    {% if uploaded_path %}
+                    <figure>
+                        <figcaption>Uploaded</figcaption>
+                        <img id="uploaded-image" src="{{ url_for('static', filename=uploaded_path) }}" alt="Uploaded image">
+                        <div class="filename">{{ uploaded_path.split('/')[-1] }}</div>
+                    </figure>
+                    {% else %}
+                    <figure class="placeholder"><div class="placeholder-box">No image uploaded</div></figure>
+                    {% endif %}
+
+                    {% if predicted_path %}
+                    <figure>
+                        <figcaption>Prediction</figcaption>
+                        <img id="predicted-image" src="{{ url_for('static', filename=predicted_path) }}" alt="Predicted image">
+                        <div class="filename">{{ predicted_path.split('/')[-1] }}</div>
+                    </figure>
+                    {% else %}
+                    <figure class="placeholder"><div class="placeholder-box">Prediction will appear here</div></figure>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Simple drag & drop UX
+        // Live previews for each direction upload input
+        function setupPreview(inputId, previewId) {
+            const inp = document.getElementById(inputId);
+            const prev = document.getElementById(previewId);
+            if (!inp || !prev) return;
+            inp.addEventListener('change', (e) => {
+                const f = e.target.files && e.target.files[0];
+                if (!f) { prev.style.display = 'none'; prev.src = ''; return; }
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    prev.src = ev.target.result;
+                    prev.style.display = 'block';
+                }
+                reader.readAsDataURL(f);
+            });
+        }
+
+        ['north','south','east','west'].forEach(d => setupPreview(d + '-input', 'preview-' + d));
+
+        // Reset previews and results when the form is cleared
+        document.getElementById('reset-btn').addEventListener('click', (e) => {
+            // Prevent default so we can also clear server-rendered results client-side
+            e.preventDefault();
+
+            // Reset the form inputs
+            const form = document.getElementById('upload-form');
+            if (form) form.reset();
+
+            // Clear preview thumbnails
+            ['north','south','east','west'].forEach(d => {
+                const p = document.getElementById('preview-' + d);
+                const i = document.getElementById(d + '-input');
+                if (p) { p.src = ''; p.style.display = 'none'; }
+                if (i) { try { i.value = null; } catch (err) {} }
+            });
+
+            // Clear legacy single-image preview elements if present
+            const up = document.getElementById('uploaded-image');
+            const pred = document.getElementById('predicted-image');
+            if (up) { up.src = ''; }
+            if (pred) { pred.src = ''; }
+
+            // Hide or remove multi-results section (server-rendered results)
+            const multi = document.querySelector('.multi-results');
+            if (multi) {
+                // Hide for smooth UX; you can also remove it entirely
+                multi.style.display = 'none';
+            }
+
+            // Also clear any predicted images shown in the dir-images area
+            const dirImgs = document.querySelectorAll('.dir-images img');
+            dirImgs.forEach(img => { img.src = ''; img.style.display = 'none'; });
+
+            // Finally navigate back to root to ensure server-side variables are cleared
+            // (this reloads the page in the initial GET state)
+            window.location.href = '/';
+        });
+    </script>
+</body>
+</html>

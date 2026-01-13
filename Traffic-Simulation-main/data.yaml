@@ -1,0 +1,24 @@
+path: Object Detection/IITM-HeTra_v2 Dataset-2 # (dataset directory path)
+train: train/images # (Complete path to dataset train folder)
+# test: # (Complete path to dataset test folder) 
+val: valid/images # (Complete path to dataset valid folder)
+
+# Classes
+nc: 4 # replace according to your number of classes
+
+#classes names
+#replace all class names list with your classes names
+names: ['Auto', 'Bus', 'Car', 'Person']
+
+
+# path: C:/Users/shirs/Desktop/Object Detection/IITM-HeTra_v2 Dataset-2 # (dataset directory path)
+# train: C:/Users/shirs/Desktop/Object Detection/IITM-HeTra_v2 Dataset-2/train/images # (Complete path to dataset train folder)
+# # test: # (Complete path to dataset test folder) 
+# valid: C:/Users/shirs/Desktop/Object Detection/IITM-HeTra_v2 Dataset-2/valid/images # (Complete path to dataset valid folder)
+
+# # Classes
+# nc: 4 # replace according to your number of classes
+
+# #classes names
+# #replace all class names list with your classes names
+# names: ['Auto', 'Bus', 'Car', 'Person']

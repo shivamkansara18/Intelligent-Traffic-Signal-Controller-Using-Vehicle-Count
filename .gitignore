@@ -1,0 +1,24 @@
+# Datasets & archives
+*.zip
+*.rar
+*.7z
+
+IDD_DataSets/
+Dataset-2_iitmhetra/
+iitm_hetra/
+
+# Virtual environments
+yolov5env/
+venv/
+env/
+
+# YOLO outputs & models
+runs/
+*.pt
+*.weights
+
+# IDE & cache
+.vscode/
+__pycache__/
+*.pyd
+*.dll
